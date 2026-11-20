@@ -1214,5 +1214,20 @@ function mkMuscleSvg(key){
 renderGroup('p-lower',LOWER);renderGroup('p-upper',UPPER);
 </script>
 
+<style>
+header>div,.meta-grid,.field{min-width:0;max-width:100%}
+@media (max-width:720px){
+  header{grid-template-columns:minmax(0,1fr)}
+}
+input[type="datetime-local"]{
+  -webkit-appearance:none;appearance:none;
+  display:block;width:100%;max-width:100%;min-width:0;
+  min-height:40px;text-align:left;
+}
+input[type="datetime-local"]::-webkit-date-and-time-value{
+  text-align:left;min-width:0;
+}
+</style>
+
 </body>
 </html>
