@@ -1071,5 +1071,143 @@ renderGroup('p-lower',LOWER);
 renderGroup('p-upper',UPPER);
 setNow();
 </script>
+<script>
+/* ========== 圖示模組 v3：肌群解剖圖 + 雙階段動作圖 (SVG) ========== */
+/* 若想改用實際圖片：IMG.hip_thrust='動作圖網址'（動作圖，鍵為動作 id）、IMG.glute='部位圖網址'（部位圖，鍵為部位代號） */
+const IMG={};
+let _u=0;
+const K={sk:'#ecc9ad',skD:'#d2a88a',top:'#1f6f73',pant:'#3a4046',pantD:'#2a2f34',hair:'#3a302c',shoe:'#f4f3ef',m:'#8d98a1',mD:'#5d6872',mL:'#c9cfd4',pad:'#2f353b',pl:'#20262b',red:'#b4443b'};
+const fx=n=>Math.round(n*10)/10;
+const L=(t,a,b)=>t?b:a;
+function seg(a,b,w,c,w2){w2=w2||w;const dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy)||1,x=-dy/n,y=dx/n;
+  return `<path d="M${fx(a[0]+x*w/2)} ${fx(a[1]+y*w/2)}L${fx(b[0]+x*w2/2)} ${fx(b[1]+y*w2/2)}L${fx(b[0]-x*w2/2)} ${fx(b[1]-y*w2/2)}L${fx(a[0]-x*w/2)} ${fx(a[1]-y*w/2)}Z" fill="${c}"/><circle cx="${a[0]}" cy="${a[1]}" r="${w/2}" fill="${c}"/><circle cx="${b[0]}" cy="${b[1]}" r="${w2/2}" fill="${c}"/>`;}
+const rc=(x,y,w,h,c,r=1.5,s)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${c}"${s?` stroke="${K.mD}" stroke-width=".8"`:''}/>`;
+const ln=(a,b,w,c)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+const ci=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+const bb=(p,r)=>ci(p[0],p[1],r,'#2b3238')+ci(p[0],p[1],r*.62,'#47525b')+ci(p[0],p[1],2,K.mL);
+const db=p=>rc(p[0]-5,p[1]-1.5,10,3,K.mD,1.4)+rc(p[0]-7,p[1]-4,3.4,8,K.pl,1)+rc(p[0]+3.6,p[1]-4,3.4,8,K.pl,1);
+const stk=(x,y,w,h)=>rc(x,y,w,h,K.mL,2,1)+Array.from({length:Math.floor(h/6)},(_,i)=>ln([x+1.5,y+3+i*6],[x+w-1.5,y+3+i*6],.9,K.mD)).join('');
+
+/* 側視人物：頭、肩、肘、腕、髖、膝、踝；d=朝向(1右/-1左)；o.fa=遠側手臂[肘x,肘y,腕x,腕y]；o.fl=遠側腿[膝x,膝y,踝x,踝y] */
+function hs(h,s,e,w,p,k,a,d,o){o=o||{};const fl=o.fl||[k[0]+2,k[1],a[0]+4,a[1]];let g='';
+  g+=seg(p,[fl[0],fl[1]],10.5,K.pantD,8)+seg([fl[0],fl[1]],[fl[2],fl[3]],7.5,K.pantD,5.5)+seg([fl[2],fl[3]],[fl[2]+d*6,fl[3]+1.5],4.8,'#d9d7d1',4.2);
+  if(o.fa)g+=seg(s,[o.fa[0],o.fa[1]],5,K.skD,4)+seg([o.fa[0],o.fa[1]],[o.fa[2],o.fa[3]],4,K.skD,3.2)+ci(o.fa[2],o.fa[3],2.4,K.skD);
+  g+=seg(p,s,12.5,K.top,13.5);
+  g+=ci(h[0]-d*3.6,h[1]-.5,5.4,K.hair)+seg(s,h,4.6,K.sk,4)+ci(h[0],h[1],5.2,K.sk)+ci(h[0]-d*1.4,h[1]-2.4,4.7,K.hair);
+  g+=seg(p,k,11.5,K.pant,8.5)+seg(k,a,8,K.pant,5.6)+seg(a,[a[0]+d*7,a[1]+1.5],5.2,K.shoe,4.4);
+  g+=seg(s,e,5.8,K.sk,4.8)+seg(e,w,4.8,K.sk,3.8)+ci(w[0],w[1],2.6,K.sk);
+  return g;}
+/* 正視人物 */
+function hf(h,s,p,el,wl,er,wr,kl,al,kr,ar){const pl=[p[0]-4.6,p[1]],pr=[p[0]+4.6,p[1]],sl=[s[0]-9.5,s[1]+1.5],sr=[s[0]+9.5,s[1]+1.5];
+  return seg(pl,kl,11,K.pant,8)+seg(kl,al,8,K.pant,5.6)+seg(pr,kr,11,K.pant,8)+seg(kr,ar,8,K.pant,5.6)
+   +rc(al[0]-4.5,al[1]-1,9,4.5,K.shoe,2)+rc(ar[0]-4.5,ar[1]-1,9,4.5,K.shoe,2)
+   +seg(s,p,19,K.top,15)+ci(sl[0],sl[1],4,K.sk)+ci(sr[0],sr[1],4,K.sk)
+   +seg(sl,el,5.6,K.sk,4.6)+seg(el,wl,4.6,K.sk,3.6)+ci(wl[0],wl[1],2.6,K.sk)
+   +seg(sr,er,5.6,K.sk,4.6)+seg(er,wr,4.6,K.sk,3.6)+ci(wr[0],wr[1],2.6,K.sk)
+   +ci(h[0],h[1]-9,3,K.hair)+ci(h[0],h[1]-1.4,6.3,K.hair)+seg(s,h,5,K.sk)+ci(h[0],h[1],5.4,K.sk)
+   +`<path d="M${h[0]-5.6} ${h[1]-1}C${h[0]-6} ${h[1]-8} ${h[0]+6} ${h[1]-8} ${h[0]+5.6} ${h[1]-1}C${h[0]+3} ${h[1]-4} ${h[0]-3} ${h[1]-4} ${h[0]-5.6} ${h[1]-1}Z" fill="${K.hair}"/>`;}
+
+/* 各動作：t=0 起始位置，t=1 用力位置（座標為 100×110 的單格畫面） */
+const ABD=(t,inv)=>{const o=inv?!t:t,ko=o?21:6,ao=o?15:7,x=inv?1:0;
+  return ln([30,28],[30,99],4,K.m)+ln([70,28],[70,99],4,K.m)+rc(37,24,26,42,K.pad,3)+rc(36,62,28,6,K.pad,2)+ln([44,68],[44,99],3,K.m)+ln([56,68],[56,99],3,K.m)
+   +hf([50,25],[50,37],[50,63],[38,50],[35,59],[62,50],[65,59],[50-ko,75],[50-ao,97],[50+ko,75],[50+ao,97])
+   +(x?rc(50-ko+2,66,5,18,K.pad,2)+rc(50+ko-7,66,5,18,K.pad,2):rc(50-ko-7,66,5,18,K.pad,2)+rc(50+ko+2,66,5,18,K.pad,2))+ci(35,60,2.8,K.mD)+ci(65,60,2.8,K.mD);};
+const EX={
+hip_thrust:t=>{const hp=L(t,[44,87],[53,66]),kn=L(t,[64,76],[74,72]),an=L(t,[68,97],[72,96]),br=[hp[0],hp[1]-1];
+  return rc(6,68,28,7,K.pad,2)+ln([12,75],[12,99],3,K.m)+ln([28,75],[28,99],3,K.m)
+   +hs([17,L(t,58,60)],[25,65],[(25+br[0])/2,(65+br[1])/2+7],br,hp,kn,an,1)+bb(br,10);},
+sl_rdl:t=>{const j=t?[[80,45],[72,48],[72,60],[72,70],[46,58],[46,78],[46,98]]:[[51,22],[50,33],[51,46],[51,58],[49,60],[49,79],[49,98]];
+  return ln([80,6],[80,99],5,K.m)+rc(66,97,28,4,K.mD,1)+ln([76,30],[84,30],2,K.mD)
+   +hs(...j,1,{fa:L(t,[66,38,79,44],[76,56,79,50]),fl:L(t,[53,79,53,98],[30,56,16,52])})+db([j[3][0],j[3][1]+2]);},
+bulgarian:t=>{const j=t?[[57,38],[56,49],[56,62],[56,72],[52,72],[70,76],[62,98]]:[[52,22],[52,33],[52,47],[53,59],[50,59],[57,78],[58,98]];
+  return rc(5,70,26,6,K.pad,2)+ln([10,76],[10,99],3,K.m)+ln([26,76],[26,99],3,K.m)
+   +hs(...j,1,{fl:L(t,[41,80,28,70],[44,90,30,72])})+db([j[3][0],j[3][1]+2]);},
+leg_press:t=>{const hip=[36,72],kn=L(t,[52,57],[46,50]),an=L(t,[70,46],[56,60]);
+  return ln([36,92],[84,44],3,K.mD)+ln([20,99],[70,99],3,K.m)+ln([16,96],[42,75],7,K.pad)+rc(24,97,30,3,K.mD,1)
+   +hs([14,91],[21,85],[30,80],[38,70],hip,kn,an,1,{fl:[kn[0]+3,kn[1]+2,an[0]+3,an[1]+2]})
+   +`<g transform="translate(${an[0]+5} ${an[1]-4}) rotate(-45)">${rc(-2.5,-13,5,26,K.mD,1.5)}${rc(-1,-13,2,26,K.mL,1)}</g>`;},
+abduction:t=>ABD(t,0),
+adduction:t=>ABD(t,1),
+lat_pulldown:t=>{const w=L(t,[45,20],[47,52]);
+  return rc(30,5,44,5,K.m,2)+ln([71,8],[71,99],5,K.m)+stk(79,14,13,72)+ci(46,9,4,K.mL)+ln([46,10],w,1.2,K.mD)
+   +rc(26,78,28,5,K.pad,2)+ln([32,83],[32,99],4,K.m)
+   +hs(L(t,[41,39],[38,39]),L(t,[40,50],[37,50]),L(t,[43,35],[34,62]),w,[40,76],[58,74],[60,98],1)
+   +rc(50,67,15,5,K.pad,2)+rc(w[0]-1.5,w[1]-3.5,3,7,K.red);},
+seated_row:t=>{const w=L(t,[62,56],[42,58]);
+  return stk(82,12,12,76)+ci(82,58,3,K.mL)+ln(w,[82,58],1.2,K.mD)+rc(12,80,28,5,K.pad,2)+ln([18,85],[18,99],4,K.m)+rc(66,70,4,30,K.m,1)
+   +hs(L(t,[36,39],[29,39]),L(t,[34,50],[28,50]),L(t,[48,52],[22,56]),w,[30,78],[50,74],[62,92],1)+rc(w[0]-1.3,w[1]-3.5,2.6,7,K.red);},
+chest_press:t=>{const w=L(t,[40,51],[62,49]),e=L(t,[25,56],[47,50]);
+  return bb([11,44],9)+ln([17,28],[17,99],4,K.m)+ln([18,36],w,3,K.m)+rc(22,36,6,42,K.pad,2)+rc(24,78,22,5,K.pad,2)+ln([30,83],[30,99],4,K.m)
+   +hs([33,37],[33,48],e,w,[34,76],[54,76],[56,98],1)+rc(w[0]-1.4,w[1]-4,2.8,8,K.red);},
+rev_fly:t=>{const e=L(t,[58,48],[38,50]),w=L(t,[70,47],[30,52]);
+  return rc(30,78,24,5,K.pad,2)+ln([36,83],[36,99],4,K.m)+ln([74,26],[74,99],4,K.m)+ln([74,32],w,2.6,K.m)+rc(54,34,7,36,K.pad,2)
+   +hs([47,37],[46,48],e,w,[40,76],[60,76],[59,98],1)+rc(w[0]-1.4,w[1]-4,2.8,8,K.red);},
+face_pull:t=>{const e=L(t,[52,37],[34,32]),w=L(t,[63,35],[46,27]);
+  return rc(84,8,10,91,K.mL,2,1)+ci(86,26,4,K.mD)+ln(w,[86,26],1.3,K.mD)
+   +hs([41,25],[40,35],e,w,[40,62],[41,80],[41,98],1,{fl:[47,80,51,98]})+ci(w[0],w[1],2.6,K.red);},
+pec_fly:t=>{const e=L(t,[24,54],[48,53]),w=L(t,[28,41],[52,41]);
+  return rc(22,30,7,46,K.pad,2)+rc(24,78,24,5,K.pad,2)+ln([30,83],[30,99],4,K.m)+ci(38,14,3,K.mD)+ln([38,14],w,2.6,K.m)
+   +hs([34,37],[34,48],e,w,[34,76],[54,76],[56,98],1)+rc(w[0]-1.5,w[1]-5,3,10,K.red);},
+cable_lat_raise:t=>{const er=L(t,[61,50],[71,37]),wr=L(t,[59,62],[83,37]);
+  return rc(6,8,10,91,K.mL,2,1)+ci(11,88,3.4,K.mD)
+   +hf([50,24],[50,36],[50,64],[39,50],[38,62],er,wr,[46,82],[46,98],[54,82],[54,98])+ln([11,88],wr,1.3,K.mD)+ci(wr[0],wr[1],2.6,K.red);},
+pull_up:t=>{const pd=L(t,80,67),p=L(t,[50,64],[50,51]);
+  return ln([20,8],[20,99],4,K.m)+ln([80,8],[80,99],4,K.m)+rc(14,6,72,4,K.mD,2)
+   +hf(L(t,[50,28],[50,14]),L(t,[50,38],[50,25]),p,L(t,[35,26],[33,22]),[30,11],L(t,[65,26],[67,22]),[70,11],[46,pd-3],[45,pd+2],[54,pd-3],[55,pd+2])
+   +rc(36,pd+1,28,5,K.pad,2)+ln([50,pd+6],[50,99],3,K.m);}
+};
+function mkActionSvg(id){
+  if(IMG[id])return `<img src="${IMG[id]}" alt="" style="width:100%;height:122px;object-fit:contain">`;
+  const g=EX[id];if(!g)return '';
+  const pn=t=>`<svg x="${t?106:2}" y="1" width="100" height="108" viewBox="0 0 100 110">${rc(0,0,100,110,'#fff',6)}${rc(0,99,100,11,'#ebe7df',0)}${g(t)}</svg>`;
+  return `<svg viewBox="0 0 208 110">${pn(0)}${pn(1)}<circle cx="104" cy="55" r="7" fill="${K.top}"/><path d="M101 55h6m-2.5-3l3 3-3 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+
+/* ===== 肌群解剖圖：正面 + 背面，主要肌群=青綠，輔助肌群=琥珀 ===== */
+const BODY='M50 17C54 17 55 20 55 23C60 25 68 26 72 28C79 30 82 36 82 44L85 70L87 88C88 92 85 94 82 94C79 94 77 91 77 86L74 62C73 56 72 50 71 46C70 56 69 66 68 74C70 80 71 86 70 94C70 108 67 114 66 120C67 130 66 138 64 146L63 150L53 150C53 140 54 130 53 120C52 112 51 104 51 92L50 86Z';
+const FM={
+ delt:['M57 27C66 24 77 28 80 37C80 44 77 49 74 50C72 44 66 38 58 34Z','M62 30Q70 34 74 44M60 32Q66 40 70 46'],
+ pec:['M51 33C57 31 64 34 69 41C68 48 61 52 51 51Z','M53 36Q60 38 66 42M53 41Q60 43 66 47'],
+ abs:['M51 53L59 53C60 62 60 72 58 80L51 84Z','M51 60H59M51 68H59M51 76H58'],
+ obl:['M60 53C65 55 68 62 67 72L63 80L59 80C61 70 61 62 60 53Z','M62 58L65 66M61 66L64 74'],
+ bi:['M78 48C81 54 82 62 80 70L74 69C73 62 72 54 74 49Z','M77 52Q78 60 77 67'],
+ fore:['M80 72L85 90C85 92 82 93 80 92L75 72Z',''],
+ quad:['M56 90C63 86 69 91 70 99C70 107 67 114 65 120L57 120C56 109 55 99 56 90Z','M60 94L62 116M65 96L65 114'],
+ add:['M51 86L57 91C58 101 57 111 56 118L52 113C52 104 51 95 51 86Z','M54 94L54 108']};
+const BM={
+ trap:['M50 20L55 21C61 24 67 27 72 29C68 38 59 47 50 54Z','M52 28L66 36M52 38L62 44'],
+ rdelt:['M72 29C79 29 83 35 82 43C79 47 75 47 73 44C72 38 72 33 72 29Z','M75 33Q78 38 77 44'],
+ infra:['M60 34L70 35C71 42 67 47 62 49C60 44 59 39 60 34Z','M62 40L69 41'],
+ lat:['M72 45C71 57 67 68 58 76L57 66C63 61 68 54 70 46Z','M69 50C66 60 63 66 60 71'],
+ tri:['M79 45C82 53 82 62 80 70L74 69C73 61 73 52 74 46Z','M77 50Q78 58 77 66'],
+ erect:['M51 60L56 60L57 76L51 79Z','M54 62L54 76'],
+ glute:['M51 79C58 76 65 79 66 87C66 94 60 98 51 95Z','M54 82Q60 84 64 90M53 90Q58 92 62 94'],
+ gmed:['M62 74C68 73 72 78 71 86C70 90 67 90 66 88C66 82 64 77 62 74Z','M66 77Q69 82 68 87'],
+ hams:['M52 97C60 99 68 97 68 105C67 111 65 116 63 121L54 121C53 112 52 104 52 97Z','M58 100L58 118M63 100L62 116'],
+ calf:['M54 124C59 122 65 124 65 132C64 139 62 143 60 146L55 146C53 138 53 130 54 124Z','M59 128L58 142']};
+const MM={glute:['glute','hams,quad'],rdl:['glute,hams','erect'],bulg:['glute,quad','add,hams'],legpress:['quad,glute','add,hams'],abduct:['gmed','glute'],adduct:['add',''],
+ lat:['lat','bi,infra,rdelt'],row:['lat,trap','rdelt,bi,tri'],chestpress:['pec','delt,tri'],reardelt:['rdelt,infra','trap'],facepull:['rdelt,infra','trap'],
+ pecfly:['pec','delt'],latraise:['delt','trap,rdelt'],pullup:['lat','bi,infra,tri']};
+function mkMuscleSvg(key){
+  if(IMG[key])return `<img src="${IMG[key]}" alt="" style="width:100%;height:122px;object-fit:contain">`;
+  const m=MM[key]||['',''],P=m[0].split(','),S=m[1].split(','),u='u'+(++_u);
+  const half=s=>s+`<g transform="translate(100 0) scale(-1 1)">${s}</g>`;
+  const view=(M,back)=>{
+    let g=`<path d="${BODY}" fill="url(#${u}b)" stroke="#716b63" stroke-width="1"/>`;
+    for(const k in M){const hp=P.includes(k),hs2=S.includes(k);
+      g+=`<path d="${M[k][0]}" fill="${hp?`url(#${u}p)`:hs2?`url(#${u}s)`:'#dad5cb'}" stroke="${hp?'#0e4a4f':hs2?'#9a6a1f':'#8a847b'}" stroke-width=".6" stroke-linejoin="round"/>`
+       +(M[k][1]?`<path d="${M[k][1]}" fill="none" stroke="${hp||hs2?'rgba(255,255,255,.55)':'rgba(0,0,0,.18)'}" stroke-width=".6" stroke-linecap="round"/>`:'');}
+    g=half(g);
+    g+=back?`<path d="M50 21V80M50 79V96" stroke="#716b63" stroke-width=".7" fill="none" opacity=".6"/><ellipse cx="50" cy="10" rx="6.8" ry="8" fill="#3a302c"/><circle cx="50" cy="3.2" r="3.6" fill="#3a302c"/>`
+     :`<path d="M50 33V86" stroke="#716b63" stroke-width=".7" fill="none" opacity=".6"/><ellipse cx="50" cy="10" rx="6.6" ry="8" fill="#f0e2d4" stroke="#716b63" stroke-width=".7"/><path d="M43.2 9C42.6 0 57.4 0 56.8 9C54.5 5 45.5 5 43.2 9Z" fill="#3a302c"/>`;
+    return g;};
+  const defs=`<defs><linearGradient id="${u}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1ede6"/><stop offset="1" stop-color="#d3cdc2"/></linearGradient>`
+   +`<linearGradient id="${u}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#46bdc0"/><stop offset="1" stop-color="#1b6d75"/></linearGradient>`
+   +`<linearGradient id="${u}s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2cf7a"/><stop offset="1" stop-color="#d9983c"/></linearGradient></defs>`;
+  return `<svg viewBox="0 0 200 150">${defs}${view(FM,0)}<g transform="translate(100 0)">${view(BM,1)}</g></svg>`;}
+
+/* 套用新圖示：重新渲染 */
+renderGroup('p-lower',LOWER);renderGroup('p-upper',UPPER);
+</script>
+
 </body>
 </html>
