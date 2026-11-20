@@ -243,6 +243,834 @@ details[open] summary::before{transform:rotate(90deg)}
 </div>
 
 <script>
+const KEY='fitnessTrackerGD_v2';
+const $=id=>document.getElementById(id);
+
+/* 依影片順序與內容配置 */
+const LOWER=[
+  {
+    id:'hip_thrust',r:'臀部主力｜強度必練',n:'槓鈴臀推',rep:'建議 6–12｜可記錄 4 組',
+    m:'glute',
+    t:['上背靠在長椅邊緣，槓鈴加保護墊置於髖摺處','下巴微收、肋骨下壓，推起至頂端夾緊臀部停 1 秒','頂端時小腿盡量接近垂直地面'],
+    w:'不要用腰椎過度後仰代償撐高'
+  },
+  {
+    id:'sl_rdl',r:'臀部與腿後側｜單邊穩定',n:'扶支撐單腳 RDL',rep:'建議 8–12 / 側｜可記錄 4 組',
+    m:'rdl',
+    t:['一手輕扶深蹲架或固定支撐物，對側手持啞鈴','支撐腿膝蓋微彎固定，髖部往後推、上身前傾至腿後側有拉伸感','骨盆維持朝向地面不翻轉，起身時用臀部往前推回'],
+    w:'若下背緊繃痠痛，請減輕重量並縮短下放幅度'
+  },
+  {
+    id:'bulgarian',r:'單腳臀部｜線條修飾',n:'保加利亞蹲',rep:'建議 8–12 / 側｜可記錄 4 組',
+    m:'bulg',
+    t:['後腳背輕放長椅上，前腳離椅約一大步距離','上身微前傾使重心集中在支撐腳臀部','控制下蹲至前大腿接近水平，再由前腳跟推起'],
+    w:'前膝勿向內扣，膝蓋不適就減小深度或先徒手'
+  },
+  {
+    id:'leg_press',r:'腿部維持｜高腳位優先',n:'45 度腿推',rep:'建議 10–15｜可記錄 4 組',
+    m:'legpress',
+    t:['雙腳置於踏板偏上方、與肩同寬或略寬以增加臀部參與','下放到臀部與下背仍緊貼椅墊的最低點為止','推起時保留微彎，膝蓋不要完全鎖死'],
+    w:'臀部捲起離開椅墊代表下放過深，需縮小行程'
+  },
+  {
+    id:'abduction',r:'上臀｜臀部外展',n:'髖外展機',rep:'建議 12–20｜可記錄 4 組',
+    m:'abduct',
+    t:['坐穩並可將上身微微前傾，雙手輕扶前方把手','用臀部外側力量將雙膝向外推開，最外端停留 1 秒','控制速度慢慢回放，不讓配重片相撞'],
+    w:'避免前後晃動身體借力'
+  },
+  {
+    id:'adduction',r:'大腿內側｜收緊',n:'髖內收機',rep:'建議 10–15｜可記錄 4 組',
+    m:'adduct',
+    t:['背部貼穩椅背，先將起始開腿角度調整至無拉扯痛的範圍','吐氣時以大腿內側發力平穩夾緊並停頓 1 秒','吸氣時慢速控制回到起始位'],
+    w:'若鼠蹊部出現刺痛，請立即調小開腿角度'
+  }
+];
+
+const UPPER=[
+  {
+    id:'lat_pulldown',r:'垂直拉｜背闊肌',n:'滑輪下拉',rep:'建議 8–12｜可記錄 4 組',
+    m:'lat',
+    t:['握距略寬於肩，挺胸並先將肩胛骨下壓穩定','想像手肘垂直往下往腰側口袋方向拉動','拉至下巴到鎖骨上胸之間後緩慢回放'],
+    w:'不要大幅度後仰甩動身體借力'
+  },
+  {
+    id:'seated_row',r:'水平拉｜中背',n:'坐姿划船 / 平拉',rep:'建議 8–12｜可記錄 4 組',
+    m:'row',
+    t:['坐姿挺直、胸口微開，雙腳踩穩踏板','先向後收緊肩胛骨，再帶動手肘向後平拉','握把拉至下胸與肚臍之間停 1 秒，感受中背收縮'],
+    w:'全程不要聳肩，避免腰部過度前彎或後倒'
+  },
+  {
+    id:'chest_press',r:'水平推｜胸、三頭',n:'水平推壓式胸推機',rep:'建議 8–12｜可記錄 4 組',
+    m:'chestpress',
+    t:['調整座椅高度使握把對準胸中線位置','肩胛微收並將上背貼穩椅背，手肘略低於肩線','穩定向前推出，頂端手肘保留微彎不鎖死'],
+    w:'推起時若肩膀往前聳起，請調降重量'
+  },
+  {
+    id:'rev_fly',r:'後三角｜中上背',n:'反向蝴蝶機',rep:'建議 12–15｜可記錄 4 組',
+    m:'reardelt',
+    t:['面向椅背坐穩，胸口輕靠軟墊，握把與肩同高','手肘維持微彎固定，將雙臂向兩側後方平穩展開','專注於後肩與上背發力，慢放回起始位置'],
+    w:'不要聳肩或用斜方肌硬拉'
+  },
+  {
+    id:'face_pull',r:'後肩｜姿勢穩定',n:'臉拉',rep:'建議 12–15｜可記錄 4 組',
+    m:'facepull',
+    t:['滑輪調至約臉部或上胸高度，雙手抓繩索兩端往後站穩','向額頭與雙耳方向拉開繩索，保持手肘略高或與肩同高','末端做肩外旋停留 1 秒，感受後肩與旋轉肌收縮'],
+    w:'核心收緊，不要身體向後仰借力'
+  },
+  {
+    id:'pec_fly',r:'胸大肌孤立｜塑形',n:'蝴蝶機夾胸',rep:'建議 10–15｜可記錄 4 組',
+    m:'pecfly',
+    t:['背與頭穩靠椅墊，肩膀下沉不聳起','手肘維持微彎角度，像環抱大樹般往胸前合攏','回程張開到胸口有舒適伸展感即可，不需過度向後'],
+    w:'避免手臂拉超過身體後方造成肩前側壓力'
+  },
+  {
+    id:'cable_lat_raise',r:'側三角｜肩線',n:'滑輪側平舉',rep:'建議 12–20 / 側｜可記錄 4 組',
+    m:'latraise',
+    t:['滑輪調至最低或髖部下方，側身站立並輕扶機架穩定','手肘微彎，以肩側帶動手臂向外上方平舉至與肩同高','頂端略停後控制 2 秒慢放回身體側邊'],
+    w:'重量過重容易變成聳肩與斜方肌代償'
+  },
+  {
+    id:'pull_up',r:'背闊肌進階｜上背',n:'引體向上 / 輔助引體',rep:'建議 依能力｜可記錄 4 組',
+    m:'pullup',
+    t:['依能力調整輔助配重，雙膝跪穩輔助墊、雙手抓握上方把手','啟動時先下沉肩胛骨，再將胸口往橫桿方向拉起','下放時全程控制 2–3 秒不自由落體'],
+    w:'若肩前側出現夾擠不適，可改寬窄握距或換回滑輪下拉'
+  }
+];
+
+/* ========== 主要訓練部位解剖圖 (SVG) ========== */
+const ANAT_STYLE={
+  skin:'#d8d3cb',
+  line:'#6b6761',
+  shade:'#c2bbb2',
+  hi:'#267977',
+  hiDark:'#175452',
+  hair:'#3a3532'
+};
+
+function lowBackBase(hiHtml){
+  const S=ANAT_STYLE;
+  return `
+  <g stroke="${S.line}" stroke-width="1.35" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 腰臀腿背面輪廓 -->
+    <path d="M36 10 C35 20,27 29,26 42 C25 53,28 60,30 70 L32 95 L30 116 L43 116 L47 93 L50 67 L54 67 L57 93 L61 116 L74 116 L72 95 L74 70 C76 60,79 53,78 42 C77 29,69 20,68 10 Z" fill="${S.skin}"/>
+    <!-- 運動短褲/腰帶線 -->
+    <path d="M36 12 Q52 16 68 12" fill="none" stroke="#8a847c" stroke-width="1"/>
+    <!-- 肌肉自然線條 -->
+    <path d="M52 18 L52 54 M34 55 Q43 60 52 54 Q61 60 70 55 M40 65 L38 92 M64 65 L66 92 M35 96 Q39 102 43 96 M61 96 Q65 102 69 96" fill="none" stroke="${S.shade}" stroke-width="1.1"/>
+  </g>
+  <g>${hiHtml}</g>
+  <path d="M52 24 L52 55 M33 55 Q43 60 52 54 Q61 60 71 55" fill="none" stroke="${S.line}" stroke-width="1.1" opacity=".65"/>`;
+}
+
+function lowFrontBase(hiHtml){
+  const S=ANAT_STYLE;
+  return `
+  <g stroke="${S.line}" stroke-width="1.35" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 腰腿正面輪廓 -->
+    <path d="M36 10 C35 20,28 29,27 42 C26 54,29 66,32 82 L31 116 L43 116 L46 86 L50 56 L54 56 L58 86 L61 116 L73 116 L72 82 C75 66,78 54,77 42 C76 29,69 20,68 10 Z" fill="${S.skin}"/>
+    <!-- 三角褲線 -->
+    <path d="M33 24 L52 44 L71 24" fill="#c9c3ba" stroke="${S.line}" stroke-width="1" opacity=".7"/>
+    <!-- 膝蓋與肌肉線 -->
+    <path d="M37 84 Q40 87 43 84 M61 84 Q64 87 67 84 M38 45 L39 78 M66 45 L65 78" fill="none" stroke="${S.shade}" stroke-width="1.1"/>
+  </g>
+  <g>${hiHtml}</g>`;
+}
+
+function upBackBase(hiHtml){
+  const S=ANAT_STYLE;
+  return `
+  <g stroke="${S.line}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 頭與綁髮 -->
+    <ellipse cx="52" cy="14" rx="7.5" ry="9" fill="${S.hair}"/>
+    <circle cx="52" cy="8" r="4.5" fill="${S.hair}"/>
+    <!-- 頸與上半身背面 -->
+    <path d="M47 22 L47 28 L30 33 C24 35,21 40,20 48 L15 78 L23 80 L28 54 L31 46 L35 66 L37 86 L32 108 L72 108 L67 86 L69 66 L73 46 L76 54 L81 80 L89 78 L84 48 C83 40,80 35,74 33 L57 28 L57 22 Z" fill="${S.skin}"/>
+    <!-- 脊椎與肩胛骨輪廓 -->
+    <path d="M52 29 L52 86 M39 40 Q46 47 45 58 M65 40 Q58 47 59 58 M37 86 Q52 89 67 86" fill="none" stroke="${S.shade}" stroke-width="1.1"/>
+  </g>
+  <g>${hiHtml}</g>
+  <path d="M52 30 L52 84" fill="none" stroke="${S.line}" stroke-width="1" opacity=".55"/>`;
+}
+
+function upFrontBase(hiHtml){
+  const S=ANAT_STYLE;
+  return `
+  <g stroke="${S.line}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 頭髮背景 -->
+    <path d="M43 10 Q52 4 61 10 L62 24 L42 24 Z" fill="${S.hair}"/>
+    <!-- 臉與頸 -->
+    <ellipse cx="52" cy="15" rx="7" ry="8.5" fill="#e6d6c8"/>
+    <path d="M44 12 Q52 7 60 12 Q57 8 52 8 Q47 8 44 12 Z" fill="${S.hair}"/>
+    <!-- 上半身正面 -->
+    <path d="M47 23 L47 28 L30 33 C24 35,21 40,20 48 L15 78 L23 80 L28 54 L31 46 L35 66 L37 86 L32 108 L72 108 L67 86 L69 66 L73 46 L76 54 L81 80 L89 78 L84 48 C83 40,80 35,74 33 L57 28 L57 23 Z" fill="${S.skin}"/>
+    <!-- 鎖骨與腹肌線 -->
+    <path d="M39 33 Q46 36 52 34 Q58 36 65 33 M52 54 L52 84 M44 62 Q52 64 60 62 M45 71 Q52 73 59 71 M46 80 Q52 82 58 80" fill="none" stroke="${S.shade}" stroke-width="1.1"/>
+  </g>
+  <g>${hiHtml}</g>`;
+}
+
+function mkMuscleSvg(key){
+  const H=ANAT_STYLE.hi, D=ANAT_STYLE.hiDark;
+  const fLine=(d)=>`<path d="${d}" fill="none" stroke="${D}" stroke-width="0.9" opacity=".65"/>`;
+
+  if(key==='glute'){
+    const hi=`
+      <path d="M30 33 C26 42,27 54,35 58 C42 61,50 58,51.5 52 L51.5 34 C46 31,35 29,30 33 Z" fill="${H}" opacity=".9"/>
+      <path d="M74 33 C78 42,77 54,69 58 C62 61,54 58,52.5 52 L52.5 34 C58 31,69 29,74 33 Z" fill="${H}" opacity=".9"/>
+      ${fLine('M32 40 Q42 42 50 40 M31 48 Q42 50 50 47 M72 40 Q62 42 54 40 M73 48 Q62 50 54 47')}`;
+    return `<svg viewBox="0 0 104 122">${lowBackBase(hi)}</svg>`;
+  }
+  if(key==='rdl'){
+    const hi=`
+      <path d="M30 34 C26 43,27 54,35 58 C42 60,50 57,51.5 52 L51.5 35 C46 32,35 30,30 34 Z" fill="${H}" opacity=".88"/>
+      <path d="M74 34 C78 43,77 54,69 58 C62 60,54 57,52.5 52 L52.5 35 C58 32,69 30,74 34 Z" fill="${H}" opacity=".88"/>
+      <path d="M32 60 C31 72,33 84,36 91 L45 91 C47 82,48 70,48 59 Z" fill="${H}" opacity=".85"/>
+      <path d="M72 60 C73 72,71 84,68 91 L59 91 C57 82,56 70,56 59 Z" fill="${H}" opacity=".85"/>
+      ${fLine('M39 62 L40 88 M65 62 L64 88 M32 45 Q42 47 50 45 M72 45 Q62 47 54 45')}`;
+    return `<svg viewBox="0 0 104 122">${lowBackBase(hi)}</svg>`;
+  }
+  if(key==='bulg'||key==='legpress'){
+    const hiF=`
+      <path d="M30 43 C29 58,31 72,35 82 L45 81 C47 70,48 56,46 44 Z" fill="${H}" opacity=".82"/>
+      <path d="M74 43 C75 58,73 72,69 82 L59 81 C57 70,56 56,58 44 Z" fill="${H}" opacity=".82"/>
+      ${fLine('M38 47 L39 79 M66 47 L65 79')}`;
+    const hiB=`
+      <path d="M30 34 C26 43,27 54,35 58 C42 60,50 57,51.5 52 L51.5 35 C46 32,35 30,30 34 Z" fill="${H}" opacity=".9"/>
+      <path d="M74 34 C78 43,77 54,69 58 C62 60,54 57,52.5 52 L52.5 35 C58 32,69 30,74 34 Z" fill="${H}" opacity=".9"/>
+      <path d="M33 61 L36 86 L45 86 L47 61 Z" fill="${H}" opacity=".68"/>
+      <path d="M71 61 L68 86 L59 86 L57 61 Z" fill="${H}" opacity=".68"/>`;
+    return `<svg viewBox="0 0 184 122">
+      <g transform="translate(-8,0)">${lowFrontBase(hiF)}</g>
+      <g transform="translate(88,0)">${lowBackBase(hiB)}</g>
+    </svg>`;
+  }
+  if(key==='abduct'){
+    const hi=`
+      <path d="M33 27 C27 33,25 44,29 52 C34 50,39 45,42 36 C43 31,38 27,33 27 Z" fill="${H}" opacity=".92"/>
+      <path d="M71 27 C77 33,79 44,75 52 C70 50,65 45,62 36 C61 31,66 27,71 27 Z" fill="${H}" opacity=".92"/>
+      ${fLine('M31 35 Q36 39 39 44 M73 35 Q68 39 65 44')}`;
+    return `<svg viewBox="0 0 104 122">${lowBackBase(hi)}</svg>`;
+  }
+  if(key==='adduct'){
+    const hi=`
+      <path d="M47 46 L50 56 L46 82 L39 78 C39 66,41 53,47 46 Z" fill="${H}" opacity=".9"/>
+      <path d="M57 46 L54 56 L58 82 L65 78 C65 66,63 53,57 46 Z" fill="${H}" opacity=".9"/>
+      ${fLine('M45 53 L43 78 M59 53 L61 78')}`;
+    return `<svg viewBox="0 0 104 122">${lowFrontBase(hi)}</svg>`;
+  }
+  if(key==='lat'){
+    const hi=`
+      <path d="M32 45 C36 45,46 50,51 58 L51 77 C43 73,37 64,34 54 Z" fill="${H}" opacity=".9"/>
+      <path d="M72 45 C68 45,58 50,53 58 L53 77 C61 73,67 64,70 54 Z" fill="${H}" opacity=".9"/>
+      <path d="M41 37 L51 44 L51 56 L38 49 Z M63 37 L53 44 L53 56 L66 49 Z" fill="${H}" opacity=".62"/>
+      ${fLine('M36 52 Q43 57 49 65 M68 52 Q61 57 55 65')}`;
+    return `<svg viewBox="0 0 104 114">${upBackBase(hi)}</svg>`;
+  }
+  if(key==='row'){
+    const hi=`
+      <path d="M39 35 L52 33 L65 35 L68 53 L52 63 L36 53 Z" fill="${H}" opacity=".88"/>
+      <path d="M33 48 C37 54,43 64,51 72 L51 60 L37 49 Z M71 48 C67 54,61 64,53 72 L53 60 L67 49 Z" fill="${H}" opacity=".72"/>
+      ${fLine('M40 42 L51 44 M64 42 L53 44 M41 50 L51 52 M63 50 L53 52')}`;
+    return `<svg viewBox="0 0 104 114">${upBackBase(hi)}</svg>`;
+  }
+  if(key==='chestpress'){
+    const hi=`
+      <path d="M34 39 C38 37,47 38,51 42 L51 54 C44 56,36 53,34 46 Z" fill="${H}" opacity=".9"/>
+      <path d="M70 39 C66 37,57 38,53 42 L53 54 C60 56,68 53,70 46 Z" fill="${H}" opacity=".9"/>
+      <path d="M24 38 C28 34,34 35,34 43 C31 46,25 46,23 42 Z" fill="${H}" opacity=".75"/>
+      <path d="M80 38 C76 34,70 35,70 43 C73 46,79 46,81 42 Z" fill="${H}" opacity=".75"/>
+      ${fLine('M37 44 L49 45 M67 44 L55 45')}`;
+    return `<svg viewBox="0 0 104 114">${upFrontBase(hi)}</svg>`;
+  }
+  if(key==='reardelt'){
+    const hi=`
+      <path d="M23 36 C27 32,35 33,36 42 C32 47,25 47,22 43 Z" fill="${H}" opacity=".92"/>
+      <path d="M81 36 C77 32,69 33,68 42 C72 47,79 47,82 43 Z" fill="${H}" opacity=".92"/>
+      <path d="M38 37 L51 39 L51 54 L38 49 Z M66 37 L53 39 L53 54 L66 49 Z" fill="${H}" opacity=".7"/>
+      ${fLine('M26 39 L34 41 M78 39 L70 41')}`;
+    return `<svg viewBox="0 0 104 114">${upBackBase(hi)}</svg>`;
+  }
+  if(key==='facepull'){
+    const hi=`
+      <path d="M23 36 C27 32,35 33,36 43 C32 47,25 47,22 43 Z" fill="${H}" opacity=".92"/>
+      <path d="M81 36 C77 32,69 33,68 43 C72 47,79 47,82 43 Z" fill="${H}" opacity=".92"/>
+      <path d="M44 29 L52 33 L60 29 L67 40 L65 55 L52 58 L39 55 L37 40 Z" fill="${H}" opacity=".75"/>
+      ${fLine('M39 42 L51 44 M65 42 L53 44')}`;
+    return `<svg viewBox="0 0 104 114">${upBackBase(hi)}</svg>`;
+  }
+  if(key==='pecfly'){
+    const hi=`
+      <path d="M33 39 C38 36,48 38,51 43 L51 55 C44 58,35 54,33 47 Z" fill="${H}" opacity=".93"/>
+      <path d="M71 39 C66 36,56 38,53 43 L53 55 C60 58,69 54,71 47 Z" fill="${H}" opacity=".93"/>
+      ${fLine('M36 44 L49 45 M37 49 L49 50 M68 44 L55 45 M67 49 L55 50')}`;
+    return `<svg viewBox="0 0 104 114">${upFrontBase(hi)}</svg>`;
+  }
+  if(key==='latraise'){
+    const sh=`
+      <path d="M22 36 C26 32,33 33,34 43 C30 48,24 48,21 43 Z" fill="${H}" opacity=".93"/>
+      <path d="M82 36 C78 32,71 33,70 43 C74 48,80 48,83 43 Z" fill="${H}" opacity=".93"/>`;
+    return `<svg viewBox="0 0 184 114">
+      <g transform="translate(-8,0)">${upFrontBase(sh)}</g>
+      <g transform="translate(88,0)">${upBackBase(sh)}</g>
+    </svg>`;
+  }
+  /* pullup */
+  const hi=`
+    <path d="M31 44 C37 44,46 49,51 57 L51 78 C43 73,37 64,34 54 Z" fill="${H}" opacity=".92"/>
+    <path d="M73 44 C67 44,58 49,53 57 L53 78 C61 73,67 64,70 54 Z" fill="${H}" opacity=".92"/>
+    <path d="M39 34 L52 38 L65 34 L67 51 L52 56 L37 51 Z" fill="${H}" opacity=".68"/>
+    <path d="M21 48 L26 48 L24 63 L19 62 Z M83 48 L78 48 L80 63 L85 62 Z" fill="${H}" opacity=".55"/>
+    ${fLine('M36 52 Q43 58 49 66 M68 52 Q61 58 55 66')}`;
+  return `<svg viewBox="0 0 104 114">${upBackBase(hi)}</svg>`;
+}
+
+/* ========== 動作圖示：雙階段器械示範圖 (SVG) ========== */
+const ACT={
+  eq:'#586066',eqL:'#9aa3a9',pad:'#3f464c',
+  skin:'#e2bfa8',hair:'#393330',top:'#266e6e',leg:'#323a40',arr:'#275356'
+};
+
+function arrow(x,y){
+  return `<path d="M${x-6} ${y} L${x+5} ${y} M${x+1} ${y-4} L${x+6} ${y} L${x+1} ${y+4}" fill="none" stroke="${ACT.arr}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".65"/>`;
+}
+
+function mkActionSvg(id){
+  const C=ACT;
+  const floor=`<line x1="8" y1="98" x2="172" y2="98" stroke="#c8c2b7" stroke-width="1.4" stroke-linecap="round"/>`;
+  let body='';
+
+  switch(id){
+    case 'hip_thrust':
+      body=`
+      <!-- Pose 1: 底部 -->
+      <rect x="14" y="64" width="22" height="7" rx="2" fill="${C.pad}"/>
+      <path d="M18 71 L18 98 M32 71 L32 98" stroke="${C.eq}" stroke-width="3"/>
+      <!-- 身體 -->
+      <circle cx="30" cy="57" r="5" fill="${C.skin}"/><circle cx="26" cy="54" r="3" fill="${C.hair}"/>
+      <path d="M34 62 L46 82" stroke="${C.top}" stroke-width="7.5" stroke-linecap="round"/>
+      <path d="M46 82 L63 73 L66 96" fill="none" stroke="${C.leg}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M37 64 L49 79" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <!-- 槓鈴 -->
+      <circle cx="51" cy="79" r="9.5" fill="none" stroke="${C.eq}" stroke-width="3.2"/>
+      <circle cx="51" cy="79" r="2.2" fill="${C.eq}"/>
+      ${arrow(89,68)}
+      <!-- Pose 2: 頂端推起 -->
+      <rect x="100" y="64" width="22" height="7" rx="2" fill="${C.pad}"/>
+      <path d="M104 71 L104 98 M118 71 L118 98" stroke="${C.eq}" stroke-width="3"/>
+      <circle cx="115" cy="58" r="5" fill="${C.skin}"/><circle cx="111" cy="55" r="3" fill="${C.hair}"/>
+      <path d="M119 63 L139 64" stroke="${C.top}" stroke-width="7.5" stroke-linecap="round"/>
+      <path d="M139 64 L157 65 L157 96" fill="none" stroke="${C.leg}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M123 63 L139 61" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="141" cy="61" r="9.5" fill="none" stroke="${C.eq}" stroke-width="3.2"/>
+      <circle cx="141" cy="61" r="2.2" fill="${C.eq}"/>`;
+      break;
+
+    case 'sl_rdl':
+      body=`
+      <!-- Pose 1: 直立扶架 -->
+      <path d="M22 14 L22 98 M16 98 L30 98" stroke="${C.eq}" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="46" cy="24" r="5.5" fill="${C.skin}"/><circle cx="50" cy="21" r="3" fill="${C.hair}"/>
+      <path d="M46 31 L46 56" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M45 58 L44 96 M49 58 L55 88" stroke="${C.leg}" stroke-width="6.5" stroke-linecap="round"/>
+      <path d="M44 36 L24 44" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M48 37 L49 62" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <rect x="44" y="61" width="10" height="4.5" rx="2" fill="${C.eq}"/>
+      ${arrow(83,56)}
+      <!-- Pose 2: 單腳前傾 -->
+      <path d="M104 14 L104 98 M98 98 L112 98" stroke="${C.eq}" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="121" cy="43" r="5.5" fill="${C.skin}"/><circle cx="124" cy="39" r="3" fill="${C.hair}"/>
+      <path d="M124 48 L143 56" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M142 58 L138 96" stroke="${C.leg}" stroke-width="6.5" stroke-linecap="round"/>
+      <path d="M144 56 L166 53" stroke="${C.leg}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M126 50 L106 49" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M128 52 L127 78" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <rect x="122" y="77" width="10" height="4.5" rx="2" fill="${C.eq}"/>`;
+      break;
+
+    case 'bulgarian':
+      body=`
+      <!-- Pose 1: 站姿預備 -->
+      <rect x="12" y="68" width="22" height="7" rx="2" fill="${C.pad}"/><path d="M16 75 L16 98 M30 75 L30 98" stroke="${C.eq}" stroke-width="3"/>
+      <circle cx="52" cy="24" r="5.5" fill="${C.skin}"/><circle cx="48" cy="21" r="3" fill="${C.hair}"/>
+      <path d="M52 31 L50 56" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M51 58 L59 77 L58 96" fill="none" stroke="${C.leg}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M48 58 L39 73 L28 69" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M51 36 L52 60" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <rect x="47" y="59" width="10" height="4.5" rx="2" fill="${C.eq}"/>
+      ${arrow(88,56)}
+      <!-- Pose 2: 下蹲 -->
+      <rect x="102" y="68" width="22" height="7" rx="2" fill="${C.pad}"/><path d="M106 75 L106 98 M120 75 L120 98" stroke="${C.eq}" stroke-width="3"/>
+      <circle cx="144" cy="40" r="5.5" fill="${C.skin}"/><circle cx="140" cy="37" r="3" fill="${C.hair}"/>
+      <path d="M142 47 L136 69" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M137 70 L156 71 L156 96" fill="none" stroke="${C.leg}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M135 71 L129 88 L117 69" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M140 52 L141 75" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <rect x="136" y="74" width="10" height="4.5" rx="2" fill="${C.eq}"/>`;
+      break;
+
+    case 'leg_press':
+      body=`
+      <!-- Pose 1: 屈膝 -->
+      <path d="M16 96 L74 96 M20 96 L28 66 L70 30 L74 96" fill="none" stroke="${C.eq}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M22 62 L38 80 L50 78" fill="none" stroke="${C.pad}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M56 34 L68 48" stroke="${C.eq}" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="24" cy="52" r="5" fill="${C.skin}"/>
+      <path d="M29 58 L41 73" stroke="${C.top}" stroke-width="7.5" stroke-linecap="round"/>
+      <path d="M43 74 L47 54 L60 40" fill="none" stroke="${C.leg}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${arrow(89,58)}
+      <!-- Pose 2: 蹬伸 -->
+      <path d="M104 96 L162 96 M108 96 L116 66 L158 30 L162 96" fill="none" stroke="${C.eq}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M110 62 L126 80 L138 78" fill="none" stroke="${C.pad}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M150 26 L162 40" stroke="${C.eq}" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="112" cy="52" r="5" fill="${C.skin}"/>
+      <path d="M117 58 L129 73" stroke="${C.top}" stroke-width="7.5" stroke-linecap="round"/>
+      <path d="M131 74 L145 52 L155 34" fill="none" stroke="${C.leg}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+
+    case 'abduction':
+      body=`
+      <!-- Pose 1: 雙腿合攏 -->
+      <rect x="16" y="24" width="18" height="72" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="44" y="64" width="24" height="6" rx="2" fill="${C.pad}"/><path d="M56 70 L56 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <circle cx="56" cy="30" r="5.5" fill="${C.skin}"/>
+      <path d="M56 37 L56 61" stroke="${C.top}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M52 64 L50 93 M60 64 L62 93" stroke="${C.leg}" stroke-width="6" stroke-linecap="round"/>
+      <rect x="42" y="69" width="5" height="11" rx="2" fill="${C.eq}"/>
+      <rect x="65" y="69" width="5" height="11" rx="2" fill="${C.eq}"/>
+      ${arrow(89,58)}
+      <!-- Pose 2: 雙腿外展 -->
+      <rect x="104" y="24" width="18" height="72" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="132" y="64" width="24" height="6" rx="2" fill="${C.pad}"/><path d="M144 70 L144 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <circle cx="144" cy="30" r="5.5" fill="${C.skin}"/>
+      <path d="M144 37 L144 61" stroke="${C.top}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M140 64 L128 74 L126 93 M148 64 L160 74 L162 93" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M124 72 L119 72 M164 72 L169 72" stroke="${C.arr}" stroke-width="2" stroke-linecap="round"/>`;
+      break;
+
+    case 'adduction':
+      body=`
+      <!-- Pose 1: 雙腿展開 -->
+      <rect x="16" y="24" width="18" height="72" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="44" y="64" width="24" height="6" rx="2" fill="${C.pad}"/><path d="M56 70 L56 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <circle cx="56" cy="30" r="5.5" fill="${C.skin}"/>
+      <path d="M56 37 L56 61" stroke="${C.top}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M52 64 L40 74 L38 93 M60 64 L72 74 L74 93" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M46 76 L51 76 M66 76 L61 76" stroke="${C.arr}" stroke-width="2" stroke-linecap="round"/>
+      ${arrow(89,58)}
+      <!-- Pose 2: 內收夾緊 -->
+      <rect x="104" y="24" width="18" height="72" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="132" y="64" width="24" height="6" rx="2" fill="${C.pad}"/><path d="M144 70 L144 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <circle cx="144" cy="30" r="5.5" fill="${C.skin}"/>
+      <path d="M144 37 L144 61" stroke="${C.top}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M141 64 L141 93 M147 64 L147 93" stroke="${C.leg}" stroke-width="6" stroke-linecap="round"/>`;
+      break;
+
+    case 'lat_pulldown':
+      body=`
+      <!-- Pose 1: 手臂上舉 -->
+      <path d="M36 12 L36 96 M62 12 L62 96 M30 12 L68 12" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="42" y="68" width="14" height="5" rx="2" fill="${C.pad}"/>
+      <line x1="49" y1="12" x2="49" y2="23" stroke="${C.eqL}" stroke-width="1.6"/>
+      <line x1="33" y1="23" x2="65" y2="23" stroke="${C.eq}" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="49" cy="39" r="5" fill="${C.skin}"/>
+      <path d="M49 45 L49 66" stroke="${C.top}" stroke-width="8.5" stroke-linecap="round"/>
+      <path d="M45 68 L44 94 M53 68 L54 94" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M44 47 L36 24 M54 47 L62 24" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      ${arrow(89,54)}
+      <!-- Pose 2: 下拉至上胸 -->
+      <path d="M118 12 L118 96 M144 12 L144 96 M112 12 L150 12" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="124" y="68" width="14" height="5" rx="2" fill="${C.pad}"/>
+      <line x1="131" y1="12" x2="131" y2="47" stroke="${C.eqL}" stroke-width="1.6"/>
+      <line x1="114" y1="47" x2="148" y2="47" stroke="${C.eq}" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="131" cy="39" r="5" fill="${C.skin}"/>
+      <path d="M131 45 L131 66" stroke="${C.top}" stroke-width="8.5" stroke-linecap="round"/>
+      <path d="M127 68 L126 94 M135 68 L136 94" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M126 48 L116 58 L118 47 M136 48 L146 58 L144 47" fill="none" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+
+    case 'seated_row':
+      body=`
+      <!-- Pose 1: 前伸 -->
+      <rect x="58" y="18" width="14" height="78" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="18" y="74" width="38" height="6" rx="2" fill="${C.pad}"/><path d="M24 80 L24 96 M48 80 L48 96" stroke="${C.eq}" stroke-width="3"/>
+      <line x1="58" y1="56" x2="46" y2="56" stroke="${C.eq}" stroke-width="1.8"/>
+      <circle cx="28" cy="40" r="5" fill="${C.skin}"/><circle cx="24" cy="38" r="2.8" fill="${C.hair}"/>
+      <path d="M28 46 L27 71" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M29 72 L45 73 L55 86" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M30 50 L47 56" stroke="${C.skin}" stroke-width="3.3" stroke-linecap="round"/>
+      ${arrow(88,58)}
+      <!-- Pose 2: 平拉向腹 -->
+      <rect x="148" y="18" width="14" height="78" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="108" y="74" width="38" height="6" rx="2" fill="${C.pad}"/><path d="M114 80 L114 96 M138 80 L138 96" stroke="${C.eq}" stroke-width="3"/>
+      <line x1="148" y1="56" x2="122" y2="58" stroke="${C.eq}" stroke-width="1.8"/>
+      <circle cx="116" cy="40" r="5" fill="${C.skin}"/><circle cx="112" cy="38" r="2.8" fill="${C.hair}"/>
+      <path d="M116 46 L116 71" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M118 72 L134 73 L144 86" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M115 50 L107 58 L122 58" fill="none" stroke="${C.skin}" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+
+    case 'chest_press':
+      body=`
+      <!-- Pose 1: 預備握把 -->
+      <path d="M20 20 L20 96 M20 24 L52 24 L52 96" fill="none" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="26" y="42" width="6" height="26" rx="2" fill="${C.pad}"/>
+      <rect x="28" y="68" width="18" height="6" rx="2" fill="${C.pad}"/>
+      <circle cx="38" cy="36" r="5" fill="${C.skin}"/>
+      <path d="M36 43 L36 66" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M38 68 L52 70 L53 94" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M36 47 L28 53 L43 52" fill="none" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M44 28 L44 56" stroke="${C.eq}" stroke-width="2.5"/>
+      ${arrow(88,56)}
+      <!-- Pose 2: 水平推出 -->
+      <path d="M110 20 L110 96 M110 24 L142 24 L142 96" fill="none" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="116" y="42" width="6" height="26" rx="2" fill="${C.pad}"/>
+      <rect x="118" y="68" width="18" height="6" rx="2" fill="${C.pad}"/>
+      <circle cx="128" cy="36" r="5" fill="${C.skin}"/>
+      <path d="M126 43 L126 66" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M128 68 L142 70 L143 94" fill="none" stroke="${C.leg}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M128 49 L154 50" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M134 26 L154 52" stroke="${C.eq}" stroke-width="2.5"/>`;
+      break;
+
+    case 'rev_fly':
+      body=`
+      <!-- Pose 1: 面向軟墊前握 -->
+      <rect x="20" y="18" width="14" height="78" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="40" y="42" width="6" height="24" rx="2" fill="${C.pad}"/>
+      <rect x="44" y="68" width="18" height="6" rx="2" fill="${C.pad}"/>
+      <circle cx="52" cy="36" r="5" fill="${C.skin}"/>
+      <path d="M51 43 L51 66" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M51 68 L48 94 M56 68 L58 94" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M49 47 L33 49" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      ${arrow(89,56)}
+      <!-- Pose 2: 雙臂向後張開 -->
+      <rect x="108" y="18" width="14" height="78" rx="2" fill="${C.eqL}" stroke="${C.eq}" stroke-width="2"/>
+      <rect x="128" y="42" width="6" height="24" rx="2" fill="${C.pad}"/>
+      <rect x="132" y="68" width="18" height="6" rx="2" fill="${C.pad}"/>
+      <circle cx="140" cy="36" r="5" fill="${C.skin}"/>
+      <path d="M139 43 L139 66" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M139 68 L136 94 M144 68 L146 94" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M141 47 L164 46" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M159 42 L166 46 L160 51" fill="none" stroke="${C.arr}" stroke-width="1.6"/>`;
+      break;
+
+    case 'face_pull':
+      body=`
+      <!-- Pose 1: 雙手前伸拉繩 -->
+      <path d="M22 14 L22 96 M16 96 L28 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <line x1="22" y1="34" x2="45" y2="38" stroke="${C.eq}" stroke-width="1.8"/>
+      <circle cx="60" cy="28" r="5" fill="${C.skin}"/><circle cx="64" cy="26" r="2.8" fill="${C.hair}"/>
+      <path d="M60 34 L59 60" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M58 62 L53 96 M62 62 L66 96" stroke="${C.leg}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M58 39 L43 38" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      ${arrow(89,54)}
+      <!-- Pose 2: 拉向額頭雙耳 -->
+      <path d="M108 14 L108 96 M102 96 L114 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <line x1="108" y1="34" x2="142" y2="31" stroke="${C.eq}" stroke-width="1.8"/>
+      <circle cx="148" cy="28" r="5" fill="${C.skin}"/><circle cx="152" cy="26" r="2.8" fill="${C.hair}"/>
+      <path d="M148 34 L147 60" stroke="${C.top}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M146 62 L141 96 M150 62 L154 96" stroke="${C.leg}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M148 38 L158 37 L144 30" fill="none" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+
+    case 'pec_fly':
+      body=`
+      <!-- Pose 1: 雙臂打開 -->
+      <path d="M36 16 L62 16 M49 16 L49 96" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="43" y="42" width="12" height="24" rx="2" fill="${C.pad}"/>
+      <circle cx="49" cy="34" r="5" fill="${C.skin}"/>
+      <path d="M49 41 L49 65" stroke="${C.top}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M45 67 L44 94 M53 67 L54 94" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M44 45 L28 45 L26 36 M54 45 L70 45 L72 36" fill="none" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${arrow(89,54)}
+      <!-- Pose 2: 雙臂夾胸合攏 -->
+      <path d="M118 16 L144 16 M131 16 L131 96" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="125" y="42" width="12" height="24" rx="2" fill="${C.pad}"/>
+      <circle cx="131" cy="34" r="5" fill="${C.skin}"/>
+      <path d="M131 41 L131 65" stroke="${C.top}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M127 67 L126 94 M135 67 L136 94" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M126 45 L122 50 L129 48 M136 45 L140 50 L133 48" fill="none" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+
+    case 'cable_lat_raise':
+      body=`
+      <!-- Pose 1: 手臂垂放 -->
+      <path d="M22 14 L22 96 M16 96 L28 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <line x1="22" y1="82" x2="54" y2="62" stroke="${C.eqL}" stroke-width="1.6"/>
+      <circle cx="48" cy="26" r="5" fill="${C.skin}"/>
+      <path d="M48 33 L48 59" stroke="${C.top}" stroke-width="8.5" stroke-linecap="round"/>
+      <path d="M45 61 L44 96 M51 61 L52 96" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M43 37 L24 44" stroke="${C.skin}" stroke-width="3" stroke-linecap="round"/>
+      <path d="M53 37 L55 62" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      ${arrow(89,54)}
+      <!-- Pose 2: 側平舉至肩高 -->
+      <path d="M110 14 L110 96 M104 96 L116 96" stroke="${C.eq}" stroke-width="3.5"/>
+      <line x1="110" y1="82" x2="162" y2="39" stroke="${C.eqL}" stroke-width="1.6"/>
+      <circle cx="136" cy="26" r="5" fill="${C.skin}"/>
+      <path d="M136 33 L136 59" stroke="${C.top}" stroke-width="8.5" stroke-linecap="round"/>
+      <path d="M133 61 L132 96 M139 61 L140 96" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M131 37 L112 44" stroke="${C.skin}" stroke-width="3" stroke-linecap="round"/>
+      <path d="M141 37 L164 38" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>`;
+      break;
+
+    case 'pull_up':
+      body=`
+      <!-- Pose 1: 懸垂伸展 -->
+      <path d="M22 14 L64 14 M24 14 L24 96 M62 14 L62 96" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="33" y="76" width="20" height="5" rx="2" fill="${C.pad}"/>
+      <circle cx="43" cy="36" r="5" fill="${C.skin}"/>
+      <path d="M43 43 L43 65" stroke="${C.top}" stroke-width="8.5" stroke-linecap="round"/>
+      <path d="M40 66 L40 78 M46 66 L46 78" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M38 44 L31 15 M48 44 L55 15" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round"/>
+      ${arrow(89,54)}
+      <!-- Pose 2: 拉起至頂端 -->
+      <path d="M110 14 L152 14 M112 14 L112 96 M150 14 L150 96" stroke="${C.eq}" stroke-width="3"/>
+      <rect x="121" y="56" width="20" height="5" rx="2" fill="${C.pad}"/>
+      <circle cx="131" cy="18" r="5" fill="${C.skin}"/>
+      <path d="M131 25 L131 46" stroke="${C.top}" stroke-width="8.5" stroke-linecap="round"/>
+      <path d="M128 47 L128 58 M134 47 L134 58" stroke="${C.leg}" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M126 27 L116 32 L120 15 M136 27 L146 32 L142 15" fill="none" stroke="${C.skin}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+  }
+
+  return `<svg viewBox="0 0 180 106">${floor}${body}</svg>`;
+}
+
+/* ========== 畫面渲染與邏輯 ========== */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+function setNow(){
+  const d=new Date();
+  $('dt').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+}
+
+function renderGroup(containerId,list){
+  $(containerId).innerHTML=list.map((ex,i)=>{
+    let rows='';
+    for(let s=1;s<=4;s++){
+      rows+=`<div class="set-row">
+        <span class="set-num">${s}</span>
+        <input type="checkbox" class="set-chk" aria-label="第${s}組完成">
+        <div class="in-wrap"><input type="number" step="0.5" inputmode="decimal" class="set-in in-w" placeholder=""><span class="unit">kg</span></div>
+        <div class="in-wrap"><input type="number" inputmode="numeric" class="set-in in-r" placeholder=""><span class="unit">次</span></div>
+        <div class="in-wrap"><input type="number" step="0.5" inputmode="decimal" class="set-in no-unit in-rir" placeholder="2"></div>
+      </div>`;
+    }
+    const tips=ex.t.map(x=>`<li>${x}</li>`).join('');
+    return `<div class="card ex-card" data-i="${i}">
+      <div class="ex-top">
+        <div class="fig-col">
+          <div class="fig-lbl">動作圖示</div>
+          <div class="fig-box">${mkActionSvg(ex.id)}</div>
+        </div>
+        <div class="fig-col">
+          <div class="fig-lbl">主要訓練部位</div>
+          <div class="fig-box">${mkMuscleSvg(ex.m)}</div>
+        </div>
+        <div class="ex-info">
+          <div class="ex-role">${ex.r}</div>
+          <h2 class="ex-name">${ex.n}</h2>
+          <div class="ex-reps">${ex.rep}</div>
+        </div>
+      </div>
+      <details>
+        <summary>動作注意事項</summary>
+        <ul class="tips-ul">${tips}</ul>
+        <div class="warn">注意：${ex.w}</div>
+      </details>
+      <div class="set-hdr"><span>組</span><span>完成</span><span>重量</span><span>次數</span><span>RIR</span></div>
+      ${rows}
+      <label class="note-lbl">備註</label>
+      <input type="text" class="ex-note" placeholder="座椅高度、左右邊感受、機台編號或調整紀錄">
+    </div>`;
+  }).join('');
+}
+
+let curTab='lower',tSec=0,tBase=0,tStart=0,tId=null,manualMin=false;
+const pad=n=>String(n).padStart(2,'0');
+
+function updTimer(){
+  $('tDisp').textContent=pad(Math.floor(tSec/60))+':'+pad(tSec%60);
+  if(!manualMin&&tSec>0)$('totalMin').value=Math.max(1,Math.round(tSec/60));
+}
+function stopTimer(){if(tId){clearInterval(tId);tId=null;}}
+function resetTimer(){
+  stopTimer();tSec=0;tBase=0;tStart=0;manualMin=false;
+  $('tDisp').textContent='00:00';$('tBtn').textContent='開始';$('totalMin').value='';
+}
+
+$('tBtn').onclick=()=>{
+  if(tId){
+    tSec=tBase+Math.floor((Date.now()-tStart)/1000);
+    tBase=tSec;stopTimer();updTimer();$('tBtn').textContent='繼續';
+  }else{
+    tStart=Date.now();
+    tId=setInterval(()=>{tSec=tBase+Math.floor((Date.now()-tStart)/1000);updTimer();},500);
+    $('tBtn').textContent='暫停';
+  }
+};
+$('tRst').onclick=resetTimer;
+$('totalMin').oninput=()=>{manualMin=true;};
+$('status').onchange=()=>{$('statusOther').classList.toggle('hide',$('status').value!=='其他');};
+
+$('openVid').onclick=()=>{
+  let u=$('cUrl').value.trim();
+  if(!u){alert('請先輸入影片網址');return;}
+  if(!/^https?:\/\//i.test(u))u='https://'+u;
+  window.open(u,'_blank','noopener');
+};
+
+document.addEventListener('change',e=>{
+  if(e.target.classList.contains('set-chk')){
+    e.target.closest('.set-row').classList.toggle('done',e.target.checked);
+  }
+});
+
+function switchTab(t){
+  curTab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='p-'+t));
+  $('bbar').classList.toggle('hide',t==='history');
+  if(t==='history')renderHist();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)switchTab(b.dataset.t);};
+
+function loadRecs(){
+  try{const d=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(d)?d:[];}
+  catch(e){return [];}
+}
+function saveRecs(arr){localStorage.setItem(KEY,JSON.stringify(arr));}
+
+function clearCurrent(ask){
+  if(ask&&!confirm('確定要清空本次輸入嗎？'))return;
+  if(curTab==='core'){
+    $('cUrl').value='';$('cMin').value='10';$('cComp').value='完整完成';$('cNote').value='';
+  }else if(curTab==='lower'||curTab==='upper'){
+    const p=$('p-'+curTab);
+    p.querySelectorAll('.set-in,.ex-note').forEach(el=>el.value='');
+    p.querySelectorAll('.set-chk').forEach(el=>el.checked=false);
+    p.querySelectorAll('.set-row').forEach(el=>el.classList.remove('done'));
+  }
+}
+$('btnClear').onclick=()=>clearCurrent(true);
+
+$('btnSave').onclick=()=>{
+  const st=$('status').value==='其他'?($('statusOther').value.trim()||'其他'):$('status').value;
+  if(tId){
+    tSec=tBase+Math.floor((Date.now()-tStart)/1000);
+    tBase=tSec;stopTimer();updTimer();$('tBtn').textContent='繼續';
+  }
+  const tMin=$('totalMin').value.trim();
+  const rec={id:Date.now(),dt:$('dt').value,status:st,totalMin:tMin,timer:$('tDisp').textContent};
+  if(curTab==='core'){
+    rec.type='核心腹肌';
+    rec.core={url:$('cUrl').value.trim(),min:$('cMin').value.trim()||'0',comp:$('cComp').value,note:$('cNote').value.trim()};
+  }else{
+    rec.type=curTab==='lower'?'下肢日':'上肢日';
+    const src=curTab==='lower'?LOWER:UPPER;
+    const items=[];let filled=0;
+    $('p-'+curTab).querySelectorAll('.ex-card').forEach((c,i)=>{
+      const sets=[];
+      c.querySelectorAll('.set-row').forEach((r,idx)=>{
+        const w=r.querySelector('.in-w').value.trim();
+        const rp=r.querySelector('.in-r').value.trim();
+        const rir=r.querySelector('.in-rir').value.trim();
+        if(w!==''||rp!==''||rir!==''){
+          sets.push({s:idx+1,w,r:rp,rir,done:r.querySelector('.set-chk').checked});
+          filled++;
+        }
+      });
+      const note=c.querySelector('.ex-note').value.trim();
+      if(sets.length||note)items.push({name:src[i].n,sets,note});
+    });
+    if(!filled){alert('下肢或上肢訓練至少要填寫一組才能儲存。');return;}
+    rec.items=items;
+  }
+  const all=loadRecs();all.push(rec);saveRecs(all);
+  clearCurrent(false);resetTimer();setNow();
+  alert('已儲存本次紀錄！');switchTab('history');
+};
+
+function renderHist(){
+  const list=loadRecs().sort((a,b)=>(b.dt||'').localeCompare(a.dt||'')||(b.id-a.id));
+  if(!list.length){$('histList').innerHTML='<div class="empty">目前尚無訓練紀錄</div>';return;}
+  $('histList').innerHTML=list.map(r=>{
+    const dur=r.totalMin?(r.totalMin+' 分鐘'):(r.timer&&r.timer!=='00:00'?r.timer:'未填');
+    let body='';
+    if(r.type==='核心腹肌'&&r.core){
+      const c=r.core;
+      let uHtml='';
+      if(c.url){
+        const href=/^https?:\/\//i.test(c.url)?c.url:'https://'+c.url;
+        uHtml=`<div class="hist-sets">影片：<a class="hist-link" href="${esc(href)}" target="_blank" rel="noopener">開啟影片</a></div>`;
+      }
+      body=`<div class="hist-ex"><div class="hist-sets">核心實做：${esc(c.min)} 分鐘｜完成程度：${esc(c.comp)}</div>${uHtml}`;
+      if(c.note)body+=`<div class="hist-note">備註：${esc(c.note)}</div>`;
+      body+='</div>';
+    }else if(r.items){
+      body=r.items.map(it=>{
+        const sh=it.sets.map(s=>{
+          const w=s.w?esc(s.w)+'kg':'-';
+          const rp=s.r?esc(s.r)+'次':'-';
+          return `第${s.s}組：${w} × ${rp}${s.rir?'，RIR '+esc(s.rir):''}`;
+        }).join('<br>');
+        let h=`<div class="hist-ex"><div class="hist-ex-t">${esc(it.name)}</div>`;
+        if(sh)h+=`<div class="hist-sets">${sh}</div>`;
+        if(it.note)h+=`<div class="hist-note">備註：${esc(it.note)}</div>`;
+        return h+'</div>';
+      }).join('');
+    }
+    return `<div class="hist-card">
+      <div class="hist-top">
+        <span class="hist-tag">${esc(r.type)}</span>
+        <button type="button" class="btn btn-red-out btn-sm" data-del="${r.id}">刪除此筆</button>
+      </div>
+      <div class="hist-meta">${esc((r.dt||'').replace('T',' '))}｜狀態：${esc(r.status)}｜總時長：${esc(dur)}</div>
+      ${body}
+    </div>`;
+  }).join('');
+}
+
+$('histList').onclick=e=>{
+  const b=e.target.closest('[data-del]');
+  if(!b||!confirm('確定要刪除此筆紀錄嗎？'))return;
+  saveRecs(loadRecs().filter(x=>String(x.id)!==b.dataset.del));
+  renderHist();
+};
+
+$('btnExp').onclick=()=>{
+  const data=JSON.stringify(loadRecs(),null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download='fitnessTrackerGD_v2_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+};
+$('btnImp').onclick=()=>$('impFile').click();
+$('impFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const arr=JSON.parse(rd.result);
+      if(!Array.isArray(arr))throw 0;
+      if(!confirm('將匯入 '+arr.length+' 筆紀錄並取代目前資料，確定嗎？'))return;
+      saveRecs(arr);renderHist();alert('匯入完成！');
+    }catch(err){alert('檔案格式錯誤，請選擇正確的 JSON 備份檔。');}
+    e.target.value='';
+  };
+  rd.readAsText(f);
+};
+$('btnClrAll').onclick=()=>{
+  if(!confirm('確定要清除全部歷史紀錄嗎？此動作無法復原。'))return;
+  localStorage.removeItem(KEY);renderHist();
+};
+
+renderGroup('p-lower',LOWER);
+renderGroup('p-upper',UPPER);
+setNow();
+</script>
 <script>
 /* ========== 圖示模組 v3：肌群解剖圖 + 雙階段動作圖 (SVG) ========== */
 /* 若想改用實際圖片：IMG.hip_thrust='動作圖網址'（動作圖，鍵為動作 id）、IMG.glute='部位圖網址'（部位圖，鍵為部位代號） */
